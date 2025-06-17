@@ -34,12 +34,24 @@ class URLModel:
 
     @classmethod
     def from_dict(cls, data: dict) -> "URLModel":
+        created_at = data.get("created_at")
+        if created_at and isinstance(created_at, str):
+            created_at = datetime.fromisoformat(created_at)
+        elif not isinstance(created_at, datetime):
+            created_at = None
+            
+        expires_at = data.get("expires_at")
+        if expires_at and isinstance(expires_at, str):
+            expires_at = datetime.fromisoformat(expires_at)
+        elif not isinstance(expires_at, datetime):
+            expires_at = None
+            
         return cls(
             id=data.get("id"),
             original_url=data.get("original_url", ""),
             short_code=data.get("short_code", ""),
-            created_at=datetime.fromisoformat(data["created_at"]) if data.get("created_at") else None,
+            created_at=created_at,
             click_count=data.get("click_count", 0),
-            expires_at=datetime.fromisoformat(data["expires_at"]) if data.get("expires_at") else None,
+            expires_at=expires_at,
             is_active=data.get("is_active", True)
         )

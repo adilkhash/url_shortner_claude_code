@@ -1,4 +1,4 @@
-from litestar import Litestar, Request, Response
+from litestar import Litestar, Request, Response, Provide
 from litestar.exceptions import HTTPException
 from litestar.middleware.cors import CORSConfig
 from litestar.status_codes import HTTP_500_INTERNAL_SERVER_ERROR
@@ -11,19 +11,10 @@ from app.config.database import create_database_connection, run_migrations
 from app.config.settings import settings
 
 
-def create_url_service() -> URLService:
+def provide_url_service() -> URLService:
     db_connection = create_database_connection()
     repository = URLRepository(db_connection)
     return URLService(repository)
-
-
-def create_controllers():
-    url_service = create_url_service()
-    
-    url_controller = URLController(url_service)
-    redirect_controller = RedirectController(url_service)
-    
-    return [url_controller, redirect_controller]
 
 
 async def exception_handler(request: Request, exc: Exception) -> Response:
@@ -57,7 +48,8 @@ def create_app() -> Litestar:
     )
 
     app = Litestar(
-        route_handlers=create_controllers(),
+        route_handlers=[URLController, RedirectController],
+        dependencies={"url_service": Provide(provide_url_service)},
         cors_config=cors_config,
         logging_config=logging_config,
         debug=settings.debug,

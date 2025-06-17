@@ -9,10 +9,10 @@ class TestURLEndpoints(unittest.TestCase):
         self.app = create_app()
         self.client = TestClient(app=self.app)
 
-    @patch('app.services.url_service.URLService')
-    def test_create_short_url_success(self, mock_service_class):
+    @patch('app.main.provide_url_service')
+    def test_create_short_url_success(self, mock_provide_service):
         mock_service = Mock()
-        mock_service_class.return_value = mock_service
+        mock_provide_service.return_value = mock_service
         
         mock_url = Mock()
         mock_url.id = 1
@@ -35,10 +35,10 @@ class TestURLEndpoints(unittest.TestCase):
         self.assertEqual(data["original_url"], "https://example.com")
         self.assertEqual(data["short_code"], "abc123")
 
-    @patch('app.services.url_service.URLService')
-    def test_create_short_url_with_custom_code(self, mock_service_class):
+    @patch('app.main.provide_url_service')
+    def test_create_short_url_with_custom_code(self, mock_provide_service):
         mock_service = Mock()
-        mock_service_class.return_value = mock_service
+        mock_provide_service.return_value = mock_service
         
         mock_url = Mock()
         mock_url.id = 1
@@ -63,10 +63,10 @@ class TestURLEndpoints(unittest.TestCase):
         data = response.json()
         self.assertEqual(data["short_code"], "custom123")
 
-    @patch('app.services.url_service.URLService')
-    def test_redirect_to_original_url(self, mock_service_class):
+    @patch('app.main.provide_url_service')
+    def test_redirect_to_original_url(self, mock_provide_service):
         mock_service = Mock()
-        mock_service_class.return_value = mock_service
+        mock_provide_service.return_value = mock_service
         
         mock_url = Mock()
         mock_url.id = 1
@@ -84,20 +84,20 @@ class TestURLEndpoints(unittest.TestCase):
         self.assertEqual(response.headers["location"], "https://example.com")
         mock_service.increment_click_count.assert_called_once_with(1)
 
-    @patch('app.services.url_service.URLService')
-    def test_redirect_not_found(self, mock_service_class):
+    @patch('app.main.provide_url_service')
+    def test_redirect_not_found(self, mock_provide_service):
         mock_service = Mock()
-        mock_service_class.return_value = mock_service
+        mock_provide_service.return_value = mock_service
         mock_service.get_url_by_short_code.return_value = None
 
         response = self.client.get("/nonexistent")
 
         self.assertEqual(response.status_code, 404)
 
-    @patch('app.services.url_service.URLService')
-    def test_get_url_stats(self, mock_service_class):
+    @patch('app.main.provide_url_service')
+    def test_get_url_stats(self, mock_provide_service):
         mock_service = Mock()
-        mock_service_class.return_value = mock_service
+        mock_provide_service.return_value = mock_service
         
         mock_url = Mock()
         mock_url.id = 1
