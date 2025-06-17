@@ -26,12 +26,10 @@ class URLRepository:
         row = cursor.fetchone()
         
         if row:
-            columns = [desc[0] for desc in cursor.description] if cursor.description else []
-            data = dict(zip(columns, row)) if columns else {}
             cursor.close()
             self.db.commit()
-            return URLModel.from_dict(data)
-        
+            return URLModel.from_dict(row)
+
         cursor.close()
         
         raise Exception("Failed to create URL")
@@ -49,10 +47,8 @@ class URLRepository:
         cursor.close()
         
         if row:
-            columns = [desc[0] for desc in cursor.description] if cursor.description else []
-            data = dict(zip(columns, row)) if columns else {}
-            return URLModel.from_dict(data)
-        
+            return URLModel.from_dict(row)
+
         return None
 
     def get_by_id(self, url_id: int) -> Optional[URLModel]:
@@ -68,9 +64,7 @@ class URLRepository:
         cursor.close()
         
         if row:
-            columns = [desc[0] for desc in cursor.description] if cursor.description else []
-            data = dict(zip(columns, row)) if columns else {}
-            return URLModel.from_dict(data)
+            return URLModel.from_dict(row)
         
         return None
 
@@ -87,11 +81,9 @@ class URLRepository:
         row = cursor.fetchone()
         
         if row:
-            columns = [desc[0] for desc in cursor.description] if cursor.description else []
-            data = dict(zip(columns, row)) if columns else {}
             self.db.commit()
             cursor.close()
-            return URLModel.from_dict(data)
+            return URLModel.from_dict(row)
         
         cursor.close()
         return None

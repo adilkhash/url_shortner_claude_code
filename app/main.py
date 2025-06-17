@@ -1,6 +1,7 @@
-from litestar import Litestar, Request, Response, Provide
+from litestar import Litestar, Request, Response
+from litestar.di import Provide
 from litestar.exceptions import HTTPException
-from litestar.middleware.cors import CORSConfig
+from litestar.config.cors import CORSConfig
 from litestar.status_codes import HTTP_500_INTERNAL_SERVER_ERROR
 from litestar.logging import LoggingConfig
 
@@ -53,7 +54,7 @@ def create_app() -> Litestar:
         cors_config=cors_config,
         logging_config=logging_config,
         debug=settings.debug,
-        exception_handlers={Exception: exception_handler}
+        exception_handlers={Exception: exception_handler},
     )
     
     return app
@@ -80,7 +81,7 @@ app = create_app()
 
 if __name__ == "__main__":
     import uvicorn
-    
+
     uvicorn.run(
         "app.main:app",
         host=settings.host,

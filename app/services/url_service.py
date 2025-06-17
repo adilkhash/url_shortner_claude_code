@@ -1,6 +1,6 @@
 import secrets
 import string
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Optional
 from app.models.url import URLModel
 from app.repositories.url_repository import URLRepository
@@ -13,13 +13,13 @@ class URLService:
     def generate_short_code(self, length: int = 6) -> str:
         characters = string.ascii_letters + string.digits
         max_attempts = 10
-        
+
         for _ in range(max_attempts):
             short_code = ''.join(secrets.choice(characters) for _ in range(length))
             existing_url = self.repository.get_by_short_code(short_code)
             if not existing_url:
                 return short_code
-        
+
         raise Exception("Failed to generate unique short code after maximum attempts")
 
     def create_url(
@@ -39,7 +39,7 @@ class URLService:
         url = URLModel(
             original_url=original_url,
             short_code=short_code,
-            created_at=datetime.utcnow(),
+            created_at=datetime.now(timezone.utc),
             expires_at=expires_at,
             is_active=True
         )
@@ -58,7 +58,7 @@ class URLService:
     def is_url_expired(self, url: URLModel) -> bool:
         if not url.expires_at:
             return False
-        return datetime.utcnow() > url.expires_at
+        return datetime.now(timezone.utc) > url.expires_at
 
     def deactivate_url(self, url_id: int) -> bool:
         return self.repository.deactivate_url(url_id)

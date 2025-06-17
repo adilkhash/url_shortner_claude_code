@@ -1,5 +1,6 @@
-from datetime import datetime
-from typing import Optional
+from datetime import datetime, timezone
+from typing import Optional, Self
+from dateutil.parser import parse
 
 
 class URLModel:
@@ -16,7 +17,7 @@ class URLModel:
         self.id = id
         self.original_url = original_url
         self.short_code = short_code
-        self.created_at = created_at or datetime.utcnow()
+        self.created_at = created_at or datetime.now(timezone.utc)
         self.click_count = click_count
         self.expires_at = expires_at
         self.is_active = is_active
@@ -33,19 +34,19 @@ class URLModel:
         }
 
     @classmethod
-    def from_dict(cls, data: dict) -> "URLModel":
+    def from_dict(cls, data: dict) -> Self:
         created_at = data.get("created_at")
         if created_at and isinstance(created_at, str):
-            created_at = datetime.fromisoformat(created_at)
+            created_at = parse(created_at)
         elif not isinstance(created_at, datetime):
             created_at = None
-            
+
         expires_at = data.get("expires_at")
         if expires_at and isinstance(expires_at, str):
-            expires_at = datetime.fromisoformat(expires_at)
+            expires_at = parse(expires_at)
         elif not isinstance(expires_at, datetime):
             expires_at = None
-            
+
         return cls(
             id=data.get("id"),
             original_url=data.get("original_url", ""),

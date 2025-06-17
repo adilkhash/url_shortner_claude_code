@@ -5,7 +5,7 @@ from pydantic import BaseModel, HttpUrl, Field
 
 
 class CreateURLRequest(BaseModel):
-    original_url: HttpUrl
+    original_url: str
     custom_code: Optional[str] = Field(None, min_length=3, max_length=20, pattern="^[a-zA-Z0-9_-]+$")
     expires_at: Optional[datetime] = None
 

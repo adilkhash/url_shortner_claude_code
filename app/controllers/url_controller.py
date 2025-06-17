@@ -1,5 +1,6 @@
 from typing import Annotated
-from litestar import Controller, post, get, Request, Response, Provide
+from litestar import Controller, post, get, Request, Response
+from litestar.di import Provide
 from litestar.status_codes import HTTP_201_CREATED, HTTP_301_MOVED_PERMANENTLY, HTTP_404_NOT_FOUND
 from litestar.exceptions import NotFoundException, ValidationException
 from app.schemas.url import CreateURLRequest, URLResponse, URLStatsResponse, CreateURLDTO, URLResponseDTO, URLStatsDTO
