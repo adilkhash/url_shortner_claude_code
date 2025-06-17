@@ -1,23 +1,38 @@
 from datetime import datetime, timezone
 from typing import Optional, Self
 from dateutil.parser import parse
+from sqlalchemy import Column, Integer, String, DateTime, Boolean
+from sqlalchemy.ext.declarative import declarative_base
+
+Base = declarative_base()
 
 
-class URLModel:
+class URLModel(Base):
+    __tablename__ = 'urls'
+    
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    original_url = Column(String, nullable=False)
+    short_code = Column(String, unique=True, nullable=False, index=True)
+    created_at = Column(DateTime(timezone=True), nullable=False, default=datetime.now(timezone.utc))
+    click_count = Column(Integer, default=0, nullable=False)
+    expires_at = Column(DateTime(timezone=True), nullable=True)
+    is_active = Column(Boolean, default=True, nullable=False)
+    
     def __init__(
         self,
-        id: Optional[int] = None,
         original_url: str = "",
         short_code: str = "",
         created_at: Optional[datetime] = None,
         click_count: int = 0,
         expires_at: Optional[datetime] = None,
-        is_active: bool = True
+        is_active: bool = True,
+        **kwargs
     ):
-        self.id = id
+        super().__init__(**kwargs)
         self.original_url = original_url
         self.short_code = short_code
-        self.created_at = created_at or datetime.now(timezone.utc)
+        if created_at:
+            self.created_at = created_at
         self.click_count = click_count
         self.expires_at = expires_at
         self.is_active = is_active

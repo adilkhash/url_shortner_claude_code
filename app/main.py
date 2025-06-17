@@ -69,7 +69,7 @@ async def lifespan_startup():
         print(f"Error running migrations: {e}")
         raise
     finally:
-        db_connection.close()
+        db_connection.close_session()
 
 
 async def lifespan_shutdown():

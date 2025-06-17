@@ -1,7 +1,9 @@
 import os
-import psycopg2
-from psycopg2.extras import RealDictCursor
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker, Session
+from sqlalchemy.pool import QueuePool
 from typing import Optional
+from app.models.url import Base
 
 
 class DatabaseConfig:
@@ -13,54 +15,37 @@ class DatabaseConfig:
         self.password = os.getenv("DB_PASSWORD", "password")
         self.connection_string = f"postgresql://{self.user}:{self.password}@{self.host}:{self.port}/{self.database}"
 
-    def get_connection_params(self) -> dict:
-        return {
-            "host": self.host,
-            "port": self.port,
-            "database": self.database,
-            "user": self.user,
-            "password": self.password,
-            "cursor_factory": RealDictCursor
-        }
-
 
 class DatabaseConnection:
     def __init__(self, config: DatabaseConfig):
         self.config = config
-        self._connection: Optional[psycopg2.extensions.connection] = None
+        self.engine = create_engine(
+            config.connection_string,
+            poolclass=QueuePool,
+            pool_size=5,
+            max_overflow=10,
+            echo=False
+        )
+        self.SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=self.engine)
+        self._session: Optional[Session] = None
 
-    def connect(self):
-        if self._connection is None or self._connection.closed:
-            self._connection = psycopg2.connect(**self.config.get_connection_params())
-            self._connection.autocommit = False
-        return self._connection
+    def get_session(self) -> Session:
+        if self._session is None:
+            self._session = self.SessionLocal()
+        return self._session
 
-    def close(self):
-        if self._connection and not self._connection.closed:
-            self._connection.close()
+    def close_session(self):
+        if self._session:
+            self._session.close()
+            self._session = None
 
-    def cursor(self):
-        connection = self.connect()
-        return connection.cursor()
-
-    def commit(self):
-        if self._connection and not self._connection.closed:
-            self._connection.commit()
-
-    def rollback(self):
-        if self._connection and not self._connection.closed:
-            self._connection.rollback()
+    def create_tables(self):
+        Base.metadata.create_all(bind=self.engine)
 
     def execute_migration(self, migration_sql: str):
-        cursor = self.cursor()
-        try:
-            cursor.execute(migration_sql)
-            self.commit()
-        except Exception as e:
-            self.rollback()
-            raise e
-        finally:
-            cursor.close()
+        with self.engine.connect() as connection:
+            connection.execute(migration_sql)
+            connection.commit()
 
 
 def create_database_connection() -> DatabaseConnection:
@@ -69,21 +54,4 @@ def create_database_connection() -> DatabaseConnection:
 
 
 def run_migrations(db_connection: DatabaseConnection):
-    migrations_dir = os.path.join(os.path.dirname(__file__), "../../migrations")
-    
-    if not os.path.exists(migrations_dir):
-        return
-    
-    migration_files = sorted([f for f in os.listdir(migrations_dir) if f.endswith('.sql')])
-    
-    for migration_file in migration_files:
-        migration_path = os.path.join(migrations_dir, migration_file)
-        with open(migration_path, 'r') as f:
-            migration_sql = f.read()
-        
-        try:
-            db_connection.execute_migration(migration_sql)
-            print(f"Applied migration: {migration_file}")
-        except Exception as e:
-            print(f"Error applying migration {migration_file}: {e}")
-            raise
+    db_connection.create_tables()
